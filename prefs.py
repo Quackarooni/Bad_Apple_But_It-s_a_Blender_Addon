@@ -153,13 +153,18 @@ for i in range(width * height):
     BadAppleDisplay.__annotations__[name] = BoolProperty()
 
 
+classes = (
+    BadAppleDisplay,
+    BAD_APPLE_OT_PLAY_ANIMATION,
+    BAD_APPLE_OT_PAUSE_ANIMATION,
+)
+
+
 def register():
-    bpy.utils.register_class(BadAppleDisplay)
-    bpy.utils.register_class(BAD_APPLE_OT_PLAY_ANIMATION)
-    bpy.utils.register_class(BAD_APPLE_OT_PAUSE_ANIMATION)
+    for cls in classes:
+        bpy.utils.register_class(cls)
 
 
 def unregister():
-    bpy.utils.unregister_class(BadAppleDisplay)
-    bpy.utils.unregister_class(BAD_APPLE_OT_PLAY_ANIMATION)
-    bpy.utils.unregister_class(BAD_APPLE_OT_PAUSE_ANIMATION)
+    for cls in classes:
+        bpy.utils.unregister_class(cls)
