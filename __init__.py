@@ -16,9 +16,9 @@
 #
 # ##### END GPL LICENSE BLOCK #####
 bl_info = {
-    "name": "Bad Apple but it's on the Blender Preferences Menu",
+    "name": "Bad Apple But It's a Blender Addon",
     "author": "Quackers",
-    "description": "Bad Apple but it's on the Blender Preferences Menu",
+    "description": "An addon that displays the Bad Apple animation on the Preferences Menu",
     "version": (1, 0),
     "blender": (3, 4, 0),
     "location": "Node Editor Toolbar",
