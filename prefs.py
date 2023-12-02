@@ -1,10 +1,10 @@
-import bpy
 import os
+import bpy
 import numpy as np
 
 from bpy import context
-from bpy.types import Scene, PropertyGroup
-from bpy.props import BoolProperty, PointerProperty
+from bpy.types import Operator, AddonPreferences
+from bpy.props import BoolProperty, IntProperty
 
 width = 42
 height = 24
@@ -12,40 +12,36 @@ height = 24
 ADDON_PATH = os.path.dirname(__file__)
 CACHE_PATH = os.path.join(ADDON_PATH, "frames\\")
 
+
 def np_array_from_image(name):
     def flip_index(i):
         inverted_index = width * height - i - 1
         row_index = inverted_index % width
         inverted_row_index = width - row_index - 1
-        return (inverted_index - row_index + inverted_row_index) 
+        return inverted_index - row_index + inverted_row_index
 
     path = os.path.join(CACHE_PATH, name + ".jpg")
-    
+
     image = bpy.data.images.load(path)
     raw_array = np.asarray(image.pixels)
     pixel_array = [row[0] for row in np.reshape(raw_array, (width * height, 4))]
 
     flipped_pixel_array = [pixel_array[flip_index(i)] for i in range(width * height)]
-    
+
     return flipped_pixel_array
+
 
 def update_props(self, context):
     prefs = fetch_user_prefs()
 
     frame = getattr(prefs, "frame_num")
     pixels = np_array_from_image(f"{frame}")
-    
+
     for index, row in enumerate(pixels):
-        #value = row[0] >= 0.5
         value = row >= 0.5
-        name = F'prop_{index}'
+        name = f"prop_{index}"
         setattr(prefs, name, value)
 
-    #for i in range(width*height):
-        #name = F'prop_{i}'
-        #value = getattr(bpy.context.scene.props, name)
-        #setattr(bpy.context.scene.props, name, not value)
-        
     for region in context.area.regions:
         region.tag_redraw()
 
@@ -58,11 +54,11 @@ def fetch_user_prefs(attr_id=None):
         return getattr(prefs, attr_id)
 
 
-class BadAppleDisplay(bpy.types.AddonPreferences):
+class BadAppleDisplay(AddonPreferences):
     bl_idname = __package__
 
-    is_playing: bpy.props.BoolProperty()
-    frame_num: bpy.props.IntProperty(name="frame_num", min = 1, max = 6572, update=update_props)
+    is_playing: BoolProperty()
+    frame_num: IntProperty(name="frame_num", min=1, max=6572, update=update_props)
 
     def draw(self, context):
         layout = self.layout
@@ -92,8 +88,9 @@ class BadAppleDisplay(bpy.types.AddonPreferences):
                 row.separator(factor=0.25)
 
 
-class BAD_APPLE_OT_PLAY_ANIMATION(bpy.types.Operator):
-    '''Plays the Bad Apple Animation'''
+class BAD_APPLE_OT_PLAY_ANIMATION(Operator):
+    """Plays the Bad Apple Animation"""
+
     bl_idname = "bad_apple.play_animation"
     bl_label = "Play Animation"
 
@@ -104,19 +101,22 @@ class BAD_APPLE_OT_PLAY_ANIMATION(bpy.types.Operator):
     def modal(self, context, event):
         prefs = fetch_user_prefs()
 
-        if event.type in {'TIMER'}:
+        if event.type in {"TIMER"}:
             prefs.frame_num = prefs.frame_num + 1
 
-        if event.type in {'RIGHTMOUSE', 'ESC'} or prefs.frame_num >= 6572 or not prefs.is_playing:
+        if (
+            event.type in {"RIGHTMOUSE", "ESC"}
+            or prefs.frame_num >= 6572
+            or not prefs.is_playing
+        ):
             prefs.is_playing = False
-            
+
             context.window.cursor_modal_restore()
             context.window_manager.event_timer_remove(self._timer)
             context.area.tag_redraw()
-            return {'CANCELLED'}
-        
-        return {'PASS_THROUGH'}
-        
+            return {"CANCELLED"}
+
+        return {"PASS_THROUGH"}
 
     def invoke(self, context, event):
         context.window_manager.modal_handler_add(self)
@@ -125,12 +125,15 @@ class BAD_APPLE_OT_PLAY_ANIMATION(bpy.types.Operator):
         prefs = fetch_user_prefs()
         prefs.is_playing = True
 
-        self._timer = context.window_manager.event_timer_add(1/30, window=context.window)
-        return {'RUNNING_MODAL'}
+        self._timer = context.window_manager.event_timer_add(
+            1 / 30, window=context.window
+        )
+        return {"RUNNING_MODAL"}
 
 
-class BAD_APPLE_OT_PAUSE_ANIMATION(bpy.types.Operator):
-    '''Pauses the Bad Apple Animation'''
+class BAD_APPLE_OT_PAUSE_ANIMATION(Operator):
+    """Pauses the Bad Apple Animation"""
+
     bl_idname = "bad_apple.pause_animation"
     bl_label = "Pause Animation"
 
@@ -142,11 +145,11 @@ class BAD_APPLE_OT_PAUSE_ANIMATION(bpy.types.Operator):
         prefs = fetch_user_prefs()
         prefs.is_playing = False
 
-        return {'FINISHED'}
+        return {"FINISHED"}
 
 
-for i in range(width*height):
-    name = F'prop_{i}'
+for i in range(width * height):
+    name = f"prop_{i}"
     BadAppleDisplay.__annotations__[name] = BoolProperty()
 
 
@@ -155,7 +158,8 @@ def register():
     bpy.utils.register_class(BAD_APPLE_OT_PLAY_ANIMATION)
     bpy.utils.register_class(BAD_APPLE_OT_PAUSE_ANIMATION)
 
+
 def unregister():
     bpy.utils.unregister_class(BadAppleDisplay)
-    bpy.utils.unregister_class(BAD_APPLE_OT_PLAY_ANIMATION)    
-    bpy.utils.unregister_class(BAD_APPLE_OT_PAUSE_ANIMATION)    
+    bpy.utils.unregister_class(BAD_APPLE_OT_PLAY_ANIMATION)
+    bpy.utils.unregister_class(BAD_APPLE_OT_PAUSE_ANIMATION)
